@@ -1,0 +1,11 @@
+{
+  "ref": "refs/tags/v1.0",
+  "head": "someCommitSHA",
+  "commits": [],
+  "repository": {
+    "name": "testing-things",
+    "owner": {
+      "login": "hiimbex"
+    }
+  }
+}

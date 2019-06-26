@@ -6,12 +6,20 @@ import nock from 'nock'
 import myProbotApp from '../src'
 import { Probot } from 'probot'
 // Requiring our fixtures
-import payload from './fixtures/issues.opened.json'
-const issueCreatedBody = { body: 'Thanks for opening this issue!' }
+import push_to_tag from './fixtures/push.tag.json'
+import push_to_master from './fixtures/push.master.json'
+import push_to_branch from './fixtures/push.branch.json'
+
+const pullRequestCreatedBody = {
+  issue: 123,
+  head: 'issue-123',
+  base: 'master',
+  draft: true
+}
 
 nock.disableNetConnect()
 
-describe('My Probot app', () => {
+describe('Pull Request First', () => {
   let probot: any
 
   beforeEach(() => {
@@ -23,7 +31,37 @@ describe('My Probot app', () => {
     app.app = () => 'test'
   })
 
-  test('creates a comment when an issue is opened', async (done) => {
+  test('does nothing when a push happens on a tag', async (done) => {
+    // Report an error if we're called
+    nock('https://api.github.com')
+      .post('/app/installations/2/access_tokens')
+      .replyWithError({
+        message: 'thou shall not call me now',
+        code: 'AWFUL_ERROR',
+      })
+
+    // Receive a webhook event
+    await probot.receive({ name: 'push', payload: push_to_tag })
+    expect(nock.isDone()).toBe(false);
+    done();
+  })
+
+  test('does nothing when a push happens on master', async (done) => {
+    // Report an error if we're called
+    nock('https://api.github.com')
+      .post('/app/installations/2/access_tokens')
+      .replyWithError({
+        message: 'thou shall not call me now',
+        code: 'AWFUL_ERROR',
+      })
+
+    // Receive a webhook event
+    await probot.receive({ name: 'push', payload: push_to_master })
+    expect(nock.isDone()).toBe(false);
+    done();
+  })
+
+  test('checks for existing pull request when an push happens on a branch', async (done) => {
     // Test that we correctly return a test token
     nock('https://api.github.com')
       .post('/app/installations/2/access_tokens')
@@ -32,13 +70,14 @@ describe('My Probot app', () => {
     // Test that a comment is posted
     nock('https://api.github.com')
       .post('/repos/hiimbex/testing-things/issues/1/comments', (body: any) => {
-        done(expect(body).toMatchObject(issueCreatedBody))
+        done(expect(body).toMatchObject(pullRequestCreatedBody))
         return true
       })
       .reply(200)
 
     // Receive a webhook event
-    await probot.receive({ name: 'issues', payload })
+    await probot.receive({ name: 'push', payload: push_to_branch })
+    expect(nock.isDone()).toBe(true)
   })
 })
 
