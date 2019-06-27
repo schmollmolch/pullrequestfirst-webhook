@@ -8,11 +8,20 @@ import { Probot } from 'probot'
 // Requiring our fixtures
 import push_to_tag from './fixtures/push.tag.json'
 import push_to_master from './fixtures/push.master.json'
-import push_to_branch from './fixtures/push.branch.json'
+import push_to_branch_issue from './fixtures/push.branch.issue.json'
+import push_to_branch_noissue from './fixtures/push.branch.json'
+import get_pullrequest_exists from './fixtures/get.pullrequest.existing.json';
 
-const pullRequestCreatedBody = {
+const pullRequestCreatedForIssueBody = {
   issue: 123,
   head: 'issue-123',
+  base: 'master',
+  draft: true
+}
+
+const pullRequestCreatedForBranchBody = {
+  title: 'Merging hotfix_urgent_urgent',
+  head: 'hotfix_urgent_urgent',
   base: 'master',
   draft: true
 }
@@ -31,54 +40,91 @@ describe('Pull Request First', () => {
     app.app = () => 'test'
   })
 
+  afterEach(() => nock.cleanAll())
+
   test('does nothing when a push happens on a tag', async (done) => {
-    // Report an error if we're called
-    nock('https://api.github.com')
-      .post('/app/installations/2/access_tokens')
-      .replyWithError({
-        message: 'thou shall not call me now',
-        code: 'AWFUL_ERROR',
-      })
+    // nock expects nothing
 
     // Receive a webhook event
     await probot.receive({ name: 'push', payload: push_to_tag })
-    expect(nock.isDone()).toBe(false);
     done();
   })
 
   test('does nothing when a push happens on master', async (done) => {
-    // Report an error if we're called
-    nock('https://api.github.com')
-      .post('/app/installations/2/access_tokens')
-      .replyWithError({
-        message: 'thou shall not call me now',
-        code: 'AWFUL_ERROR',
-      })
+    // nock expects nothing
 
     // Receive a webhook event
-    await probot.receive({ name: 'push', payload: push_to_master })
-    expect(nock.isDone()).toBe(false);
+    await probot.receive({ name: 'push', payload: push_to_master });
     done();
   })
 
-  test('checks for existing pull request when an push happens on a branch', async (done) => {
+  test('does nothing if existing pull request when an push happens on a branch', async (done) => {
     // Test that we correctly return a test token
     nock('https://api.github.com')
       .post('/app/installations/2/access_tokens')
-      .reply(200, { token: 'test' })
+      .reply(200, { token: 'test' });
 
-    // Test that a comment is posted
+    // Test query for existing pull request
     nock('https://api.github.com')
-      .post('/repos/hiimbex/testing-things/issues/1/comments', (body: any) => {
-        done(expect(body).toMatchObject(pullRequestCreatedBody))
-        return true
+      .get('/repos/hiimbex/testing-things/pulls')
+      .query(query => {
+        //{ state: 'open', head: 'hotfix_urgent_urgent', base: 'master' }
+        done(expect(query).toMatchObject({ state: 'open', head: 'hotfix_urgent_urgent', base: 'master' }))
+        return true;
       })
-      .reply(200)
+      .reply(200, get_pullrequest_exists);
 
     // Receive a webhook event
-    await probot.receive({ name: 'push', payload: push_to_branch })
-    expect(nock.isDone()).toBe(true)
-  })
+    await probot.receive({ name: 'push', payload: push_to_branch_noissue });
+  });
+
+  test('create pull request when an push happens on a branch without pull request without issue id in name', async (done) => {
+    // Test that we correctly return a test token
+    nock('https://api.github.com')
+      .post('/app/installations/2/access_tokens')
+      .reply(200, { token: 'test' });
+
+    // Test query for existing pull request
+    nock('https://api.github.com')
+      .get('/repos/hiimbex/testing-things/pulls')
+      .query(() => true)
+      .reply(200, []);
+
+    // create pull request for branch
+    nock('https://api.github.com')
+      .post('/repos/hiimbex/testing-things/pulls', (body: any) => {
+        done(expect(body).toMatchObject(pullRequestCreatedForBranchBody))
+        return true;
+      })
+      .reply(200);
+
+    // Receive a webhook event
+    await probot.receive({ name: 'push', payload: push_to_branch_noissue });
+  });
+
+  test('create pull request when an push happens on a branch without pull request with issue id in name', async (done) => {
+    // Test that we correctly return a test token
+    nock('https://api.github.com')
+      .post('/app/installations/2/access_tokens')
+      .reply(200, { token: 'test' });
+
+    // Test query for existing pull request
+    nock('https://api.github.com')
+      .get('/repos/hiimbex/testing-things/pulls')
+      .query(() => true)
+      .reply(200, []);
+
+    // create pull request for branch
+    nock('https://api.github.com')
+      .post('/repos/hiimbex/testing-things/pulls', (body: any) => {
+        done(expect(body).toMatchObject(pullRequestCreatedForIssueBody))
+        return true;
+      })
+      .reply(200);
+
+    // Receive a webhook event
+    await probot.receive({ name: 'push', payload: push_to_branch_issue });
+  });
 })
 
 // For more information about testing with Jest see:

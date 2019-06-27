@@ -7,9 +7,10 @@
 
 1. register for [push events](https://developer.github.com/v3/activity/events/types/#pushevent) to the repo.
 2. upon push, 
-   1. check if push git ref was a branch that not master (```refs/heads/<branchname>```)
-   2. check if [branch is already covered by an open pull request](https://developer.github.com/v3/pulls/#list-pull-requests)
-   3. [create a new pull request](https://developer.github.com/v3/pulls/#create-a-pull-request) for the branch marked _WIP_.
+   1. check if push git ref was a branch that not master (```refs/heads/<branchname>```). if true,
+   2. check if [branch is already not yet covered by an open pull request](https://developer.github.com/v3/pulls/#list-pull-requests). if true,
+      1. check if branch contains numbers. if true, search for corresponding issue. if still open, create pull request for issue, marked _WIP_. else
+      2. [create a new pull request](https://developer.github.com/v3/pulls/#create-a-pull-request) for the branch, marked _WIP_.
 
 ## Setup
 
