@@ -3,20 +3,24 @@
     "name": "pullrequest-first",
     "alias": "https://pullrequest-first.now.sh",
     "env": {
-        "APP_ID": "34339",
+        "APP_ID": "@app-id",
         "WEBHOOK_SECRET": "@webhook-secret",
         "NODE_ENV": "production",
-        "PRIVATE_KEY": "@private-key"
+        "PRIVATE_KEY": "@private-key",
+        "LOG_LEVEL": "trace"
     },
+    "regions": [
+        "sfo"
+    ],
     "routes": [
         {
-            "src": "/(.*)",
-            "dest": "/lib/$1"
+            "src": "/",
+            "dest": "/src/now.ts"
         }
     ],
     "builds": [
         {
-            "src": "./src/index.ts",
+            "src": "./src/now.ts",
             "use": "@now/node"
         }
     ]

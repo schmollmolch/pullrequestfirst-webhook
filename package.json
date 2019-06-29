@@ -22,6 +22,7 @@
     "deploy": "now"
   },
   "dependencies": {
+    "@chadfawcett/probot-serverless-now": "^1.0.0",
     "probot": "^9.2.15"
   },
   "devDependencies": {
