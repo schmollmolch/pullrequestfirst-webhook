@@ -1,9 +1,12 @@
+// see https://github.com/standard/standard/issues/1291
+/* eslint no-unused-vars: "off" */
+/* eslint @typescript-eslint/no-unused-vars: "error" */
 import { debug } from 'debug'
 import { Application, Context } from 'probot'
 import { WebhookPayloadPush } from '@octokit/webhooks'
 
 const log = debug('create-pullrequest-webhook')
-debug.enable('create-pullrequest-webhook');
+debug.enable('create-pullrequest-webhook')
 
 const createPullRequestForBranch = (context: Context, branchName: string) => {
   const newPullRequest = context.issue({ title: 'Merging ' + branchName, head: branchName, base: 'master', draft: true })
