@@ -46,7 +46,7 @@ export = (app: Application) => {
           log(`Branch name contains number ${issueNumber}, try to find matching issue`)
 
           try {
-            const issue = await context.github.issues.get(context.issue({ number: issueNumber }))
+            const issue = await context.github.issues.get(context.issue({ issue_number: issueNumber }))
             if (issue.status === 200 && issue.data.state === 'open') {
               log(`Found issue number ${issueNumber} and it's open.`)
               await createPullRequestForIssue(context, issueNumber, branchName)
