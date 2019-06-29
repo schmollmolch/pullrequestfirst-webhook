@@ -32,7 +32,10 @@ export = (app: Application) => {
       log(`Figured out branch name ${branchName}`)
 
       // check if branch is not yet covered by an open pull request]
-      const existingPullRequests = await context.github.pulls.list(context.issue(({ state: 'open', head: branchName, base: 'master' })))
+      const existingPullRequests = await context.github.pulls.list(context.issue({
+        state: 'open',
+        head: context.issue({}).owner + ':' + branchName // hack to get repo owner name from context
+      }))
       if (existingPullRequests.data && existingPullRequests.data.length === 0) {
         log(`No open pull request found for this branch`)
 
@@ -60,6 +63,8 @@ export = (app: Application) => {
           log(`Branch name does not contains numbers.`)
           await createPullRequestForBranch(context, branchName)
         }
+      } else {
+        log(`Retrieving existing pull requests returned ${existingPullRequests.data.length}. Won't create a new one.`)
       }
     }
   })
