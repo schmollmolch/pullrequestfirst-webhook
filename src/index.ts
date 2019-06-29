@@ -11,13 +11,13 @@ debug.enable('create-pullrequest-webhook')
 const createPullRequestForBranch = (context: Context, branchName: string) => {
   const newPullRequest = context.issue({ title: 'Merging ' + branchName, head: branchName, base: 'master', draft: true })
   log(`Creating pull request ${JSON.stringify(newPullRequest)} for branch ${branchName}`)
-  return context.github.pullRequests.create(newPullRequest)
+  return context.github.pulls.create(newPullRequest)
 }
 
 const createPullRequestForIssue = (context: Context, issueNumber: number, branchName: string) => {
   const newPullRequest = context.issue({ issue: issueNumber, head: branchName, base: 'master', draft: true })
   log(`Creating pull request ${JSON.stringify(newPullRequest)} for issue ${issueNumber}`)
-  return context.github.pullRequests.createFromIssue(newPullRequest)
+  return context.github.pulls.createFromIssue(newPullRequest)
 }
 
 export = (app: Application) => {
@@ -32,7 +32,7 @@ export = (app: Application) => {
       log(`Figured out branch name ${branchName}`)
 
       // check if branch is not yet covered by an open pull request]
-      const existingPullRequests = await context.github.pullRequests.list(context.issue(({ state: 'open', head: branchName, base: 'master' })))
+      const existingPullRequests = await context.github.pulls.list(context.issue(({ state: 'open', head: branchName, base: 'master' })))
       if (existingPullRequests.data && existingPullRequests.data.length === 0) {
         log(`No open pull request found for this branch`)
 

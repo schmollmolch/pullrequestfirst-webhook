@@ -38,7 +38,7 @@ describe('Pull Request First', () => {
   let probot: any
 
   beforeEach(() => {
-    probot = new Probot({ id: 123, cert: 'test' })
+    probot = new Probot({ id: 123, cert: 'test', githubToken: 'test' })
     // Load our app into probot
     const app = probot.load(myProbotApp)
 
