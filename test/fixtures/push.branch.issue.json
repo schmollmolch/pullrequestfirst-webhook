@@ -1,6 +1,6 @@
 {
-  "ref": "refs/heads/hotfix_urgent_urgent",
-  "head": "someCommitSHA",
+  "ref": "refs/heads/issue-123",
+  "head": "someOtherCommitSHA",
   "commits": [],
   "repository": {
     "name": "testing-things",
