@@ -11,21 +11,20 @@ import getPullrequestExists from './fixtures/get.pullrequest.existing.json'
 import getIssueOpen from './fixtures/get.issue.open.json'
 import getIssueClosed from './fixtures/get.issue.closed.json'
 
-const pullRequestCreatedForIssueBody = {
+// Expected request bodys
+const pullRequestCreatedForOpenIssueBody = {
   issue: 123,
   head: 'issue-123',
   base: 'master',
   draft: true
 }
-
 const pullRequestCreatedForBranchBody = {
   title: 'Merging hotfix_urgent_urgent',
   head: 'hotfix_urgent_urgent',
   base: 'master',
   draft: true
 }
-
-const pullRequestCreatedForClosedIssueBody = {
+const pullRequestCreatedForClosedOrNotFoundIssueBody = {
   title: 'Merging issue-123',
   head: 'issue-123',
   base: 'master',
@@ -51,7 +50,7 @@ describe('Pull Request First', () => {
   test('does nothing when a push happens on a tag', async (done) => {
     // nock expects nothing
 
-    // Receive a webhook event
+    // Receive webhook event
     await probot.receive({ name: 'push', payload: pushToTag })
     done()
   })
@@ -59,12 +58,12 @@ describe('Pull Request First', () => {
   test('does nothing when a push happens on master', async (done) => {
     // nock expects nothing
 
-    // Receive a webhook event
+    // Receive webhook event
     await probot.receive({ name: 'push', payload: pushToMaster })
     done()
   })
 
-  test('does nothing if existing pull request when an push happens on a branch', async (done) => {
+  test('does nothing if pull request exists when an push happens on a branch', async (done) => {
     // Test that we correctly return a test token
     nock('https://api.github.com')
       .post('/app/installations/2/access_tokens')
@@ -74,12 +73,12 @@ describe('Pull Request First', () => {
     nock('https://api.github.com')
       .get('/repos/hiimbex/testing-things/pulls')
       .query(query => {
-        expect(query).toMatchObject({ state: 'open', head: 'hotfix_urgent_urgent', base: 'master' })
+        expect(query).toMatchObject({ state: 'open', head: 'hiimbex:hotfix_urgent_urgent' })
         return true
       })
       .reply(200, getPullrequestExists)
 
-    // Receive a webhook event
+    // Receive webhook event
     await probot.receive({ name: 'push', payload: pushToBranchNoissue })
     done()
   })
@@ -124,12 +123,13 @@ describe('Pull Request First', () => {
     // Test query for existing issue
     nock('https://api.github.com')
       .get('/repos/hiimbex/testing-things/issues/123')
+      .query(() => true)
       .reply(404, 'not found')
 
     // create pull request for branch
     nock('https://api.github.com')
       .post('/repos/hiimbex/testing-things/pulls', (body: any) => {
-        expect(body).toMatchObject(pullRequestCreatedForClosedIssueBody)
+        done(expect(body).toMatchObject(pullRequestCreatedForClosedOrNotFoundIssueBody))
         return true
       })
       .reply(200)
@@ -154,12 +154,13 @@ describe('Pull Request First', () => {
     // Test query for existing issue
     nock('https://api.github.com')
       .get('/repos/hiimbex/testing-things/issues/123')
+      .query(() => true)
       .reply(200, getIssueClosed)
 
     // create pull request for branch
     nock('https://api.github.com')
       .post('/repos/hiimbex/testing-things/pulls', (body: any) => {
-        expect(body).toMatchObject(pullRequestCreatedForClosedIssueBody)
+        expect(body).toMatchObject(pullRequestCreatedForClosedOrNotFoundIssueBody)
         return true
       })
       .reply(200)
@@ -184,12 +185,13 @@ describe('Pull Request First', () => {
     // Test query for existing issue
     nock('https://api.github.com')
       .get('/repos/hiimbex/testing-things/issues/123')
+      .query(() => true)
       .reply(200, getIssueOpen)
 
     // create pull request for branch
     nock('https://api.github.com')
       .post('/repos/hiimbex/testing-things/pulls', (body: any) => {
-        expect(body).toMatchObject(pullRequestCreatedForIssueBody)
+        expect(body).toMatchObject(pullRequestCreatedForOpenIssueBody)
         return true
       })
       .reply(200)
